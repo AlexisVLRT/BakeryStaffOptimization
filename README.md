@@ -16,8 +16,8 @@ We have 2 types of constraints :
     - Prefered schedule 
     - ...
     
-A solution not satisfying all of the hard constraints will be discarded from the solution set
+A solution not satisfying all of the hard constraints would be discarded from the solution set
 
-The fitness score will be a linear combination of weighted factors derived from the soft constraints. The weights are to be determined with the client.
+The fitness score will likely be a linear combination of weighted factors derived from the soft constraints. The weights are to be determined with the client.
 
 It is likely that this program will have Json files as inputs and outputs to easily interface with the web app developped in parallel.
