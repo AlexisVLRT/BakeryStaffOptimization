@@ -3,6 +3,7 @@ from Worker import Worker
 from Workforce import Workforce
 from StoreSchedule import StoreSchedule
 from ScheduleAssignment import ScheduleAssignment
+from Visualizer import Visualizer
 
 
 class Scheduler:
@@ -20,17 +21,24 @@ class Scheduler:
                        worker['jobs'])
             )
 
+        self.blank_schedule = StoreSchedule()
+        self.blank_schedule.schedule = self.input_data['schedule']
         self.initial_schedule = StoreSchedule()
         self.generate_initial_schedule()
+        self.initial_schedule.mutate(self.workforce)
 
     def generate_initial_schedule(self):
+        visualizer_id = 0
         for day, day_schedule in self.input_data['schedule'].items():
             for job, start, end in day_schedule:
                 selected_worker = self.workforce.get_best_worker_for_job(job, day, start, end)
-                self.initial_schedule.assign(ScheduleAssignment(selected_worker, job, day, start, end))
+                self.initial_schedule.assign(ScheduleAssignment(selected_worker, job, day, start, end, visualizer_id))
+                visualizer_id += 1
+        self.initial_schedule.visualizer_col_number = visualizer_id
 
 
 if __name__ == '__main__':
     with open('testDataIn.json', 'r') as f:
         data_in = json.load(f)
         scheduler = Scheduler(data_in)
+        visu = Visualizer(scheduler.blank_schedule, scheduler.initial_schedule)
