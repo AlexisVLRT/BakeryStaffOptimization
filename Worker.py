@@ -1,4 +1,5 @@
 from WorkerSchedule import WorkerSchedule
+from ScheduleAssignment import ScheduleAssignment
 
 
 class Worker:
@@ -11,6 +12,6 @@ class Worker:
         self.preferred_bakery = prefered_bakery
         self.schedule = WorkerSchedule()
 
-    def add_task(self, job, day, start, end):
-        self.schedule.add_task(job, day, start, end)
-        self.remaining_hours -= end - start
+    def add_task(self, assignment: ScheduleAssignment):
+        self.schedule.add_task(assignment)
+        self.remaining_hours -= assignment.end - assignment.start

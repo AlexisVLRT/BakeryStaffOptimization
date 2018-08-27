@@ -2,6 +2,7 @@ import json
 from Worker import Worker
 from Workforce import Workforce
 from StoreSchedule import StoreSchedule
+from ScheduleAssignment import ScheduleAssignment
 
 
 class Scheduler:
@@ -26,8 +27,7 @@ class Scheduler:
         for day, day_schedule in self.input_data['schedule'].items():
             for job, start, end in day_schedule:
                 selected_worker = self.workforce.get_best_worker_for_job(job, day, start, end)
-                self.initial_schedule.assign(selected_worker, job, day, start, end)
-
+                self.initial_schedule.assign(ScheduleAssignment(selected_worker, job, day, start, end))
 
 if __name__ == '__main__':
     with open('testDataIn.json', 'r') as f:

@@ -1,3 +1,6 @@
+from ScheduleAssignment import ScheduleAssignment
+
+
 class StoreSchedule:
     def __init__(self):
         self.schedule = {
@@ -10,9 +13,9 @@ class StoreSchedule:
             "sun": [],
         }
 
-    def assign(self, worker, job, day, start, end):
-        self.schedule[day].append([worker, job, start, end])
-        worker.add_task(job, day, start, end)
+    def assign(self, assignment: ScheduleAssignment):
+        self.schedule[assignment.day].append(assignment)
+        assignment.worker.add_task(assignment)
 
     def get_fitness(self):
         return 0
