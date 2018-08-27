@@ -43,11 +43,11 @@ class Visualizer:
                 self.add_task(offset, 80//len(jobs), job_name, day, start, end, True)
 
     def display_full(self, filled_schedule: StoreSchedule):
-        schedule_data = filled_schedule.schedule
-        for day, jobs in schedule_data.items():
-            for job in jobs:
-                offset = (jobs.index(job)+1) * 80/len(jobs) - (40/len(jobs)) - 40
-                self.add_task(offset, 80//len(jobs), job.job, day, job.start, job.end)
+        for day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']:
+            assignments = filled_schedule.get_assignments_day(day)
+            for assignment in assignments:
+                offset = (assignments.index(assignment)+1) * 80/len(assignments) - (40/len(assignments)) - 40
+                self.add_task(offset, 80//len(assignments), assignment.job, day, assignment.start, assignment.end)
 
     def add_task(self, offset, width, job, day, start, end, bg=False):
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']

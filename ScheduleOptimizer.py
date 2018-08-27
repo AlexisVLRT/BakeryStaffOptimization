@@ -29,6 +29,7 @@ class Scheduler:
                 selected_worker = self.workforce.get_best_worker_for_job(job, day, start, end)
                 self.initial_schedule.assign(ScheduleAssignment(selected_worker, job, day, start, end))
 
+
 if __name__ == '__main__':
     with open('testDataIn.json', 'r') as f:
         data_in = json.load(f)

@@ -1,0 +1,2 @@
+mutation rate : 1%
+thing : 2
