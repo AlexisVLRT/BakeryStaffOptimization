@@ -5,8 +5,8 @@ import time
 
 
 class Visualizer:
-    def __init__(self, blank_schedule, full_schedule):
-        self.blank_schedule = blank_schedule
+    def __init__(self, blank_schedule_data, full_schedule):
+        self.blank_schedule_data = blank_schedule_data
         self.full_schedule = full_schedule
 
         self.tk = Tk()
@@ -15,14 +15,12 @@ class Visualizer:
         self.frame.pack()
         self.canvas = Canvas(self.frame, height=500, width=800, bg='#bbbbbb')
         self.canvas.pack()
-        self.display_blank(self.blank_schedule)
+        self.display_blank()
         self.tk.after(3000, self.display_full, self.full_schedule)
-        # self.display_full(self.full_schedule)
         self.tk.mainloop()
 
-    def display_blank(self, blank_schedule: StoreSchedule):
-        schedule_data = blank_schedule.schedule
-        days = ['mon', 'tue', 'wen', 'thu', 'fri', 'sat', 'sun']
+    def display_blank(self):
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         y = 0
         for i in range(5, 22):
             self.canvas.create_text(25, y+100, text=str(i))
@@ -36,11 +34,14 @@ class Visualizer:
             x += 100
         self.canvas.create_line(750, 90, 750, 450)
 
-        for day, jobs in schedule_data.items():
-            for job in jobs:
-                job_name, start, end = job
-                offset = (jobs.index(job)+1) * 80/len(jobs) - (40/len(jobs)) - 40
-                self.add_task(offset, 80//len(jobs), job_name, day, start, end, True)
+        for day in days:
+            day_assignments = []
+            for assignment in self.blank_schedule_data:
+                if assignment.day == day:
+                    day_assignments.append(assignment)
+            for assignment in day_assignments:
+                offset = (day_assignments.index(assignment) + 1) * 80 / len(day_assignments) - (40 / len(day_assignments)) - 40
+                self.add_task(offset, 80 // len(day_assignments), assignment.job, day, assignment.start, assignment.end, True)
 
     def display_full(self, filled_schedule: StoreSchedule):
         for day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']:
