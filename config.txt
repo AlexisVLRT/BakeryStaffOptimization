@@ -1,1 +1,37 @@
 mutation rate : 10%
+commute time (hours) : 1
+
+# Penalty applied to score every time a worker is assigned to a job they are not qualified for
+penalty unqualified : 50
+
+penalty 24h rest : 50
+
+penalty task overlap : 50
+
+penalty scheduled on time off : 50
+
+penalty 3h gap : 50
+
+bonus per 11h break : 10
+
+penalty wrong store : 20
+
+penalty multiple shops same day : 10
+
+penalty commuting not respected : 50
+
+penalty >46 hours : 10
+
+penalty >42 hours : 5
+
+penalty overtime : 1
+
+bonus overtime reduction : 1
+
+penalty >15% overtime reduction : 1
+
+penalty necessary hours : 5
+
+penalty recommended hours : 2
+
+penalty overscheduling : 2
