@@ -1,21 +1,21 @@
 {
   "schedule": {
-    "mon": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "tue": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "wed": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "thu": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "fri": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "sat": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 20.75], ["snack", 7.75, 14.83], ["vente", 6, 21], ["vente", 10, 15], ["vente", 17, 21], ["vente", 12, 14]],
-    "sun": [["drive-pizza", 10.75, 14], ["drive-pizza", 17, 19], ["snack", 7.75, 14.83], ["vente", 6, 19], ["vente", 10, 15], ["vente", 17, 19], ["vente", 12, 14]]
+    "mon": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "tue": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "wed": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "thu": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "fri": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "sat": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 20.75, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 21, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 21, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]],
+    "sun": [["drive-pizza", 10.75, 14, "store1", "necessary"], ["drive-pizza", 17, 19, "store1", "necessary"], ["snack", 7.75, 14.83, "store1", "necessary"], ["vente", 6, 19, "store1", "necessary"], ["vente", 10, 15, "store1", "recommended"], ["vente", 17, 19, "store1", "recommended"], ["vente", 12, 14, "store1", "recommended"]]
     },
   "workers": [
-    {"first name": "Mickael", "last name": "VANLAETHEM", "normal hours": 35, "hours left": 35, "jobs": ["drive-pizza", "vente"]},
-    {"first name": "Nicolas", "last name": "STEVENIN", "normal hours": 35, "hours left": 35, "jobs": ["drive-pizza", "vente"]},
-    {"first name": "Amelie", "last name": "ALBINET", "normal hours": 35, "hours left": 35, "jobs": ["vente"]},
-    {"first name": "Annelyse", "last name": "FLAGEL", "normal hours": 25, "hours left": 25, "jobs": ["vente"]},
-    {"first name": "Isabelle", "last name": "MARTY", "normal hours": 35, "hours left": 35, "jobs": ["vente"]},
-    {"first name": "Maeva", "last name": "GERVOT", "normal hours": 35, "hours left": 35, "jobs": ["vente"]},
-    {"first name": "Adam", "last name": "MASSOL", "normal hours": 35, "hours left": 35, "jobs": ["vente"]},
-    {"first name": "Mélissa", "last name": "DA SILVA", "normal hours": 24, "hours left": 24, "jobs": ["vente"]}
+    {"first name": "Mickael", "last name": "VANLAETHEM", "normal hours": 35, "hours left": 35, "jobs": ["drive-pizza", "vente"], "store": "store1", "rest": []},
+    {"first name": "Nicolas", "last name": "STEVENIN", "normal hours": 35, "hours left": 35, "jobs": ["drive-pizza", "vente"], "store": "store1", "rest": []},
+    {"first name": "Amelie", "last name": "ALBINET", "normal hours": 35, "hours left": 35, "jobs": ["vente", "snack"], "store": "store1", "rest": [["mon", 0, 24]]},
+    {"first name": "Annelyse", "last name": "FLAGEL", "normal hours": 25, "hours left": 25, "jobs": ["vente", "snack"], "store": "store1", "rest": []},
+    {"first name": "Isabelle", "last name": "MARTY", "normal hours": 35, "hours left": 35, "jobs": ["vente", "snack"], "store": "store1", "rest": []},
+    {"first name": "Maeva", "last name": "GERVOT", "normal hours": 35, "hours left": 35, "jobs": ["vente"], "store": "store1", "rest": []},
+    {"first name": "Adam", "last name": "MASSOL", "normal hours": 35, "hours left": 35, "jobs": ["vente"], "store": "store1", "rest": []},
+    {"first name": "Mélissa", "last name": "DA SILVA", "normal hours": 24, "hours left": 24, "jobs": ["vente"], "store": "store1", "rest": []}
   ]
 }
