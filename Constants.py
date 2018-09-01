@@ -8,6 +8,7 @@ class Constants:
                 config_contents[line.split(':')[0].strip()] = line.split(':')[1].strip()
 
         self.mutation_rate = float(config_contents['mutation rate'].replace('%', ''))/100
+        self.crossover_rate = float(config_contents['crossover rate'].replace('%', ''))/100
         self.commute_time = float(config_contents['commute time (hours)'])
         self.unqualified = float(config_contents['penalty unqualified'])
         self.weekly_rest = float(config_contents['penalty 24h rest'])
@@ -18,6 +19,7 @@ class Constants:
         self.wrong_store = float(config_contents['penalty wrong store'])
         self.multiple_shops = float(config_contents['penalty multiple shops same day'])
         self.commuting = float(config_contents['penalty commuting not respected'])
+        self.more_8_daily_hours = float(config_contents['penalty >8 hours in an day'])
         self.above_46 = float(config_contents['penalty >46 hours'])
         self.above_42 = float(config_contents['penalty >42 hours'])
         self.overtime = float(config_contents['penalty overtime'])

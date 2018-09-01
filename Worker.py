@@ -34,6 +34,9 @@ class Worker:
     def get_hours_count(self, days):
         return self.schedule.get_hours_count(days)
 
+    def get_hours_over_8_count(self):
+        return self.schedule.get_hours_over_8_count()
+
     def get_overtime(self):
         # can be negative
         return self.get_hours_count(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) - self.normal_hours

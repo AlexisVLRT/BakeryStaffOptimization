@@ -62,6 +62,16 @@ class WorkerSchedule:
                     n_gaps += 1
         return n_gaps
 
+    def get_hours_over_8_count(self):
+        count = 0
+        for day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']:
+            day_count = 0
+            for assignment in self._schedule:
+                if assignment.day == day:
+                    day_count += assignment.end - assignment.start
+            count += max(0, day_count - 8)
+        return count
+
     def get_hours_count(self, days):
         hours_count = 0
         for assignment in self._schedule:

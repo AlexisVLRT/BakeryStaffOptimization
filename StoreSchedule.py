@@ -1,9 +1,7 @@
 from ScheduleAssignment import ScheduleAssignment
-from Constants import Constants
 import random
 from typing import List
 from Workforce import Workforce
-from copy import deepcopy
 from Constants import Constants
 
 
@@ -54,12 +52,10 @@ class StoreSchedule:
         return necessary_hours_not_filled / 60, recommended_hours_not_filled / 60, overfilled / 60
 
     def mutate(self, workforce: Workforce):
-        mutation_rate = Constants().mutation_rate
-        print(mutation_rate, len(self.schedule))
         mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']
 
         for assignment in self.schedule:
-            if mutation_rate >= random.random():
+            if self.constants.mutation_rate >= random.random():
                 mutation = mutations[random.randint(0, len(mutations)-1)]
                 # print(mutation)
 
@@ -101,10 +97,12 @@ class StoreSchedule:
                         if second_assignment != assignment and second_assignment.day == assignment.day and second_assignment.worker == assignment.worker:
                             if second_assignment.start == assignment.end:
                                 assignment.end = second_assignment.end
+                                second_assignment.worker.remove_task(second_assignment)
+                                self.schedule.remove(second_assignment)
                             elif second_assignment.end == assignment.start:
                                 assignment.start = second_assignment.start
-                            second_assignment.worker.remove_task(second_assignment)
-                            del self.schedule[self.schedule.index(second_assignment)]
+                                second_assignment.worker.remove_task(second_assignment)
+                                self.schedule.remove(second_assignment)
                             break
 
                 elif mutation == 'swap workers':
@@ -123,6 +121,23 @@ class StoreSchedule:
                     assignment.worker.remove_task(assignment)
                     assignment.worker = new_worker
                     assignment.worker.add_task(assignment)
+
+    def crossover(self, second_schedule: "StoreSchedule"):
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        if self.constants.crossover_rate >= random.random():
+            days_to_swap = [random.randint(0, 1) for _ in range(7)]
+            for day in days:
+                if days_to_swap[days.index(day)]:
+                    assignments_1 = self.get_assignments_day(day)
+                    assignments_2 = second_schedule.get_assignments_day(day)
+
+                    for assignment in assignments_1:
+                        self.schedule.remove(assignment)
+                        second_schedule.schedule.append(assignment)
+
+                    for assignment in assignments_2:
+                        second_schedule.schedule.remove(assignment)
+                        self.schedule.append(assignment)
 
     def get_fitness(self, workforce: Workforce):
         score = 0
@@ -176,10 +191,16 @@ class StoreSchedule:
                 warnings.append('{} {} a {} trous de plus de 3h dans son emploi du temps'.format(worker.first_name, worker.last_name, errors))
             score -= errors * self.constants.day_gap
 
+        # Max 8 hours scheduled daily
+        for worker in workforce.workers:
+            hours_over = worker.get_hours_over_8_count()
+            if hours_over:
+                warnings.append('{} {} Cumule {} heures au delas des 8 journalières sur la semaine'.format(worker.first_name, worker.last_name, hours_over))
+            score -= max(0, hours_over) * self.constants.more_8_daily_hours
+
         # At least 11 consecutive hours unscheduled per day
         for worker in workforce.workers:
             # TODO warning
-            print(worker.get_11_hr_gap_count())
             score += worker.get_11_hr_gap_count() * self.constants.daily_rest
 
         # A worker should be scheduled in their store in priority
@@ -208,12 +229,12 @@ class StoreSchedule:
                 # No past overtime to catch up to
                 overtime = worker.get_overtime()
                 if overtime:
-                    warnings.append('{} {} réalise {}h supplémentaires'.format(worker.first_name, worker.last_name, overtime))
+                    warnings.append('{} {} réalise {}h supplémentaires'.format(worker.first_name, worker.last_name, round(overtime, 2)))
                 score -= abs(overtime) * self.constants.overtime
             else:
                 # Past overtime is to be caught up to at a rate of 15% of the normal hours per week
                 if worker.overtime_counter and worker.get_overtime():
-                    warnings.append('{} {} avait {}h supplémentaires, et en effectue {}h'.format(worker.first_name, worker.last_name, worker.overtime_counter, worker.get_overtime()))
+                    warnings.append('{} {} avait {}h supplémentaires, et en effectue {}h'.format(worker.first_name, worker.last_name, round(worker.overtime_counter), round(worker.get_overtime(), 2)))
                 score += worker.get_overtime() * self.constants.overtime_dec
                 score -= (worker.get_overtime() - worker.overtime_counter) * self.constants.overtime
                 score -= max(0, worker.get_overtime() - 0.15*worker.normal_hours) * self.constants.too_much_overtime_dec

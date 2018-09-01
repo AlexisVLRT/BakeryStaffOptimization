@@ -1,4 +1,5 @@
 mutation rate : 10%
+crossover rate : 5%
 commute time (hours) : 1
 
 # Penalty applied to score every time a worker is assigned to a job they are not qualified for
@@ -19,6 +20,8 @@ penalty wrong store : 20
 penalty multiple shops same day : 10
 
 penalty commuting not respected : 50
+
+penalty >8 hours in an day : 4
 
 penalty >46 hours : 10
 

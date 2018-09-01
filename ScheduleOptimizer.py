@@ -1,15 +1,19 @@
 import json
+import random
 from Worker import Worker
 from Workforce import Workforce
 from StoreSchedule import StoreSchedule
 from ScheduleAssignment import ScheduleAssignment
 from Visualizer import Visualizer
+from Constants import Constants
+from typing import List
 
 
 class Scheduler:
     def __init__(self, input_data=None):
         self.input_data = input_data
 
+        self.constants = Constants()
         self.workforce = Workforce()
         for worker in self.input_data['workers']:
             self.workforce.add_worker(
@@ -24,7 +28,8 @@ class Scheduler:
 
         self.initial_schedule = StoreSchedule()
         self.generate_initial_schedule()
-        self.initial_schedule.mutate(self.workforce)
+        # self.initial_schedule.mutate(self.workforce)
+        self.population = []  # type: List[StoreSchedule]
 
     def generate_initial_schedule(self):
         visualizer_id = 0
@@ -35,6 +40,14 @@ class Scheduler:
                 self.initial_schedule.assign(ScheduleAssignment(selected_worker, store, job, day, start, end, visualizer_id))
                 visualizer_id += 1
         self.initial_schedule.visualizer_col_number = visualizer_id
+
+    def crossover(self):
+        for individual in self.population:
+            individual.crossover(self.population[random.randint(0, len(self.population)-1)])
+
+    def mutate(self):
+        for individual in self.population:
+            individual.mutate(self.workforce)
 
 
 if __name__ == '__main__':

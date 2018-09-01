@@ -16,7 +16,7 @@ class Visualizer:
         self.canvas = Canvas(self.frame, height=500, width=800, bg='#bbbbbb')
         self.canvas.pack()
         self.display_blank()
-        self.tk.after(3000, self.display_full, self.full_schedule)
+        self.tk.after(1000, self.display_full, self.full_schedule)
         self.tk.mainloop()
 
     def display_blank(self):
@@ -48,7 +48,7 @@ class Visualizer:
             assignments = filled_schedule.get_assignments_day(day)
             for assignment in assignments:
                 offset = (assignment.visualizer_id % 7 + 1) * 7*80/filled_schedule.visualizer_col_number - (7*40/filled_schedule.visualizer_col_number) - 40
-                self.add_task(offset, 80//len(assignments), assignment.job, day, assignment.start, assignment.end, name=assignment.worker.first_name)
+                self.add_task(offset, 7*80//filled_schedule.visualizer_col_number, assignment.job, day, assignment.start, assignment.end, name=assignment.worker.first_name)
 
     def add_task(self, offset, width, job, day, start, end, bg=False, name=None):
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
