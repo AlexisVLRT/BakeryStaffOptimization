@@ -8,3 +8,15 @@ class ScheduleAssignment:
         self.end = end
         self.visualizer_id = visualizer_id
         self.importance = importance
+
+    def json_repr(self):
+        assignment = {
+            'Worker': {'Id': self.worker.worker_id, 'FirstName': self.worker.first_name, 'LastName': self.worker.last_name},
+            'Store': self.store,
+            'JobName': self.job,
+            'WeekDay': self.day,
+            'StartTime': self.start,
+            'EndTime': self.end,
+            'Importance': self.importance
+        }
+        return assignment

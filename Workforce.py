@@ -17,3 +17,8 @@ class Workforce:
             scores[self.workers.index(worker)] = 0 if worker.schedule.is_busy(day, start, end) else scores[self.workers.index(worker)]
             # print(worker.first_name, scores[self.workers.index(worker)])
         return self.workers[scores.index(max(scores))]
+
+    def get_worker_by_id(self, worker_id):
+        for worker in self.workers:
+            if worker.worker_id == worker_id:
+                return worker

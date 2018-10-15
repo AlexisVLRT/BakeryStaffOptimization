@@ -1,16 +1,43 @@
 from ScheduleAssignment import ScheduleAssignment
 import random
 from typing import List
+from Worker import Worker
 from Workforce import Workforce
 from Constants import Constants
+from copy import deepcopy
 
 
 class StoreSchedule:
-    def __init__(self):
+    def __init__(self, input_data, visualizer_col_number=None):
+        self.input_data = input_data
         self.desired_schedule = []  # type: List[ScheduleAssignment]
         self.schedule = []  # type: List[ScheduleAssignment]
-        self.visualizer_col_number = None
+
+        self.workforce = Workforce()
+        for worker in self.input_data['workers']:
+            self.workforce.add_worker(
+                Worker(self.input_data['workers'].index(worker),
+                       worker['first name'],
+                       worker['last name'],
+                       worker['normal hours'],
+                       worker['hours left'],
+                       worker['jobs'],
+                       worker['store'],
+                       worker['rest'])
+            )
+
+        self.visualizer_col_number = visualizer_col_number
         self.constants = Constants()
+        self.fitness = None
+
+    def json_repr(self):
+        score, warnings = self.get_fitness()
+        schedule = {
+            'Score': score,
+            'Assignments': [assignment.json_repr() for assignment in self.schedule],
+            'Warnings': warnings
+        }
+        return schedule
 
     def assign(self, assignment: ScheduleAssignment):
         self.schedule.append(assignment)
@@ -26,18 +53,19 @@ class StoreSchedule:
         """
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         repr = {day: {} for day in days}
+
         for assignment in self.schedule:
-            assignment_as_minutes = [int(assignment.end * 60 >= minute > assignment.start * 60) for minute in range(1440)]
+            assignment_as_minutes = [int(assignment.end * 12 >= minute > assignment.start * 12) for minute in range(288)]
             if assignment.job in repr[assignment.day].keys():
-                repr[assignment.day][assignment.job] = [assignment_as_minutes[minute] + repr[assignment.day][assignment.job][minute] for minute in range(1440)]
+                repr[assignment.day][assignment.job] = [assignment_as_minutes[minute] + repr[assignment.day][assignment.job][minute] for minute in range(288)]
             else:
                 repr[assignment.day][assignment.job] = assignment_as_minutes
 
         repr_desired = {day: {'necessary': {}, 'recommended': {}} for day in days}
         for assignment in self.desired_schedule:
-            assignment_as_minutes = [int(assignment.end * 60 >= minute > assignment.start * 60) for minute in range(1440)]
+            assignment_as_minutes = [int(assignment.end * 12 >= minute > assignment.start * 12) for minute in range(288)]
             if assignment.job in repr_desired[assignment.day][assignment.importance].keys():
-                repr_desired[assignment.day][assignment.importance][assignment.job] = [assignment_as_minutes[minute] + repr_desired[assignment.day][assignment.importance][assignment.job][minute] for minute in range(1440)]
+                repr_desired[assignment.day][assignment.importance][assignment.job] = [assignment_as_minutes[minute] + repr_desired[assignment.day][assignment.importance][assignment.job][minute] for minute in range(288)]
             else:
                 repr_desired[assignment.day][assignment.importance][assignment.job] = assignment_as_minutes
 
@@ -46,16 +74,17 @@ class StoreSchedule:
         overfilled = 0
         for day, staffing in repr.items():
             for job_name, scheduling in staffing.items():
-                necessary_hours_not_filled -= sum([min(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0)) for minute in range(1440)])
-                recommended_hours_not_filled -= sum([min(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(1440)])
-                overfilled += sum([max(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(1440)])
-        return necessary_hours_not_filled / 60, recommended_hours_not_filled / 60, overfilled / 60
+                necessary_hours_not_filled -= sum([min(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0)) for minute in range(288)])
+                recommended_hours_not_filled -= sum([min(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(288)])
+                overfilled += sum([max(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(288)])
+        return necessary_hours_not_filled / 12, recommended_hours_not_filled / 12, overfilled / 12
 
-    def mutate(self, workforce: Workforce):
+    def mutate(self, rate=None):
         mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']
+        mutation_rate = rate/100 if rate is not None else self.constants.mutation_rate
 
         for assignment in self.schedule:
-            if self.constants.mutation_rate >= random.random():
+            if mutation_rate >= random.random():
                 mutation = mutations[random.randint(0, len(mutations)-1)]
                 # print(mutation)
 
@@ -84,7 +113,7 @@ class StoreSchedule:
                         assignment.end,
                         assignment.visualizer_id
                     )
-                    self.schedule.append(second_half)
+                    self.assign(second_half)
                     second_half.worker.add_task(second_half)
                     assignment.end = assignment.start + (assignment.end - assignment.start) / 2
 
@@ -108,38 +137,46 @@ class StoreSchedule:
                 elif mutation == 'swap workers':
                     # two assignments swap workers
                     second_assignment = self.schedule[random.randint(0, len(self.schedule)-1)]
-
-                    assignment.worker.add_task(second_assignment)
-                    assignment.worker.remove_task(assignment)
-                    second_assignment.worker.add_task(assignment)
-                    second_assignment.worker.remove_task(second_assignment)
-                    second_assignment.worker, assignment.worker = assignment.worker, second_assignment.worker
+                    if assignment != second_assignment:
+                        assignment.worker.add_task(second_assignment)
+                        assignment.worker.remove_task(assignment)
+                        second_assignment.worker.add_task(assignment)
+                        second_assignment.worker.remove_task(second_assignment)
+                        second_assignment.worker, assignment.worker = assignment.worker, second_assignment.worker
 
                 elif mutation == 'change worker':
                     # an assignment changes worker
-                    new_worker = workforce.workers[random.randint(0, len(workforce.workers)-1)]
+                    new_worker = self.workforce.workers[random.randint(0, len(self.workforce.workers)-1)]
                     assignment.worker.remove_task(assignment)
                     assignment.worker = new_worker
                     assignment.worker.add_task(assignment)
 
-    def crossover(self, second_schedule: "StoreSchedule"):
+    def mate(self, second_schedule: "StoreSchedule"):
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-        if self.constants.crossover_rate >= random.random():
-            days_to_swap = [random.randint(0, 1) for _ in range(7)]
-            for day in days:
-                if days_to_swap[days.index(day)]:
-                    assignments_1 = self.get_assignments_day(day)
-                    assignments_2 = second_schedule.get_assignments_day(day)
+        days_to_swap = [random.randint(0, 1) for _ in range(7)]
+        child1, child2 = StoreSchedule(self.input_data, self.visualizer_col_number), StoreSchedule(self.input_data, self.visualizer_col_number)
 
-                    for assignment in assignments_1:
-                        self.schedule.remove(assignment)
-                        second_schedule.schedule.append(assignment)
+        for day in days:
+            assignments_1 = deepcopy(self.get_assignments_day(day))
+            assignments_2 = deepcopy(second_schedule.get_assignments_day(day))
 
-                    for assignment in assignments_2:
-                        second_schedule.schedule.remove(assignment)
-                        self.schedule.append(assignment)
+            if days_to_swap[days.index(day)]:
+                for assignment in assignments_1:
+                    assignment.worker = child1.workforce.get_worker_by_id(assignment.worker.worker_id)
+                    child1.assign(assignment)
+                for assignment in assignments_2:
+                    assignment.worker = child2.workforce.get_worker_by_id(assignment.worker.worker_id)
+                    child2.assign(assignment)
+            else:
+                for assignment in assignments_1:
+                    assignment.worker = child1.workforce.get_worker_by_id(assignment.worker.worker_id)
+                    child2.assign(assignment)
+                for assignment in assignments_2:
+                    assignment.worker = child2.workforce.get_worker_by_id(assignment.worker.worker_id)
+                    child1.assign(assignment)
+        return child1, child2
 
-    def get_fitness(self, workforce: Workforce):
+    def get_fitness(self):
         score = 0
         warnings = []
 
@@ -150,13 +187,13 @@ class StoreSchedule:
                 warnings.append('{} {} est assigné au poste {} {} à {}h, mais n\'en possède pas la compétence'.format(assignment.worker.first_name, assignment.worker.last_name, assignment.job, assignment.day, assignment.start))
 
         # A least 24 consecutive hours unscheduled per week
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             if not worker.has_24_hr_rest():
                 score -= self.constants.weekly_rest
                 warnings.append('{} {} n\'a pas 24h de repos consécutif dans la semaine'.format(worker.first_name, worker.last_name))
 
         # A worker can not be scheduled in 2 different tasks at the same time
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             overlap_count = worker.get_tasks_overlap_count()
             if overlap_count:
                 warnings.append('{} {} est assigné à deux postes en même temps'.format(worker.first_name, worker.last_name))
@@ -165,6 +202,7 @@ class StoreSchedule:
         # A shop must at least have the minimal required personnel
         # A shop must have the recommended personnel
         necessary_hours_not_filled, recommended_hours_not_filled, overfilled = self.get_job_scheduling_errors()
+
         if necessary_hours_not_filled:
             warnings.append('{}h nécessaires non assignés'.format(necessary_hours_not_filled))
         score -= necessary_hours_not_filled * self.constants.necessary_hours
@@ -178,28 +216,28 @@ class StoreSchedule:
         score -= overfilled * self.constants.overfilling
 
         # A worker's scheduled days off must be respected
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             errors = worker.get_scheduled_time_off_error_count()
             if errors:
                 warnings.append('{} {} est assigné pendant son congé {} fois'.format(worker.first_name, worker.last_name, errors))
             score -= errors * self.constants.scheduled_on_time_off
 
         # A worker can not have more than 3h of downtime between assignments
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             errors = worker.get_3_hr_gap_count()
             if errors:
                 warnings.append('{} {} a {} trous de plus de 3h dans son emploi du temps'.format(worker.first_name, worker.last_name, errors))
             score -= errors * self.constants.day_gap
 
         # Max 8 hours scheduled daily
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             hours_over = worker.get_hours_over_8_count()
             if hours_over:
                 warnings.append('{} {} Cumule {} heures au delas des 8 journalières sur la semaine'.format(worker.first_name, worker.last_name, hours_over))
             score -= max(0, hours_over) * self.constants.more_8_daily_hours
 
         # At least 11 consecutive hours unscheduled per day
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             # TODO warning
             score += worker.get_11_hr_gap_count() * self.constants.daily_rest
 
@@ -210,21 +248,21 @@ class StoreSchedule:
                 warnings.append('{} {} est assigné au magasin {} qui n\'est pas son magasin prioritaire ({}) {} à {}h'.format(assignment.worker.first_name, assignment.worker.last_name, assignment.store, assignment.worker.store, assignment.day, assignment.start))
 
         # No more than 46 weekly hours
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             hour_count = worker.get_hours_count(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'])
             if hour_count > 46:
                 score -= (46 - hour_count) * self.constants.above_46
                 warnings.append('{} {} travaille plus de 46h (hebdomadaire)'.format(worker.first_name, worker.last_name))
 
         # No more than 42 hours from mon to fri
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             hour_count = worker.get_hours_count(['mon', 'tue', 'wed', 'thu', 'fri'])
             if hour_count > 42:
                 score -= (42 - hour_count) * self.constants.above_42
                 warnings.append('{} {} travaille plus de 42h entre lundi et vendredi'.format(worker.first_name, worker.last_name))
 
         # Least possible overtime
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             if not worker.overtime_counter:
                 # No past overtime to catch up to
                 overtime = worker.get_overtime()
@@ -240,11 +278,12 @@ class StoreSchedule:
                 score -= max(0, worker.get_overtime() - 0.15*worker.normal_hours) * self.constants.too_much_overtime_dec
 
         # No multi-site scheduling on the same day
-        for worker in workforce.workers:
+        for worker in self.workforce.workers:
             occurrences, insufficient_commute_time = worker.works_different_shops_same_day()
             if occurrences:
                 warnings.append('{} {} est affecté {} fois sur des sites différents, {} fois avec un temps insuffisant de trajet'.format(worker.first_name, worker.last_name, occurrences, insufficient_commute_time))
             score -= occurrences * self.constants.multiple_shops
             score -= insufficient_commute_time * self.constants.commuting
 
+        self.fitness = score
         return score, warnings

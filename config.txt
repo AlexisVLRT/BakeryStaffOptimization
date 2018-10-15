@@ -1,9 +1,10 @@
-mutation rate : 10%
+mutation rate : 2%
 crossover rate : 5%
+population size : 40
 commute time (hours) : 1
 
 # Penalty applied to score every time a worker is assigned to a job they are not qualified for
-penalty unqualified : 50
+penalty unqualified : 100
 
 penalty 24h rest : 50
 

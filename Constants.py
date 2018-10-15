@@ -9,6 +9,7 @@ class Constants:
 
         self.mutation_rate = float(config_contents['mutation rate'].replace('%', ''))/100
         self.crossover_rate = float(config_contents['crossover rate'].replace('%', ''))/100
+        self.population_size = int(config_contents['population size'])
         self.commute_time = float(config_contents['commute time (hours)'])
         self.unqualified = float(config_contents['penalty unqualified'])
         self.weekly_rest = float(config_contents['penalty 24h rest'])
