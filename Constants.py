@@ -7,7 +7,8 @@ class Constants:
             if '#' not in line and line.strip() != '':
                 config_contents[line.split(':')[0].strip()] = line.split(':')[1].strip()
 
-        self.mutation_rate = float(config_contents['mutation rate'].replace('%', ''))/100
+        self.mutation_rate = float(config_contents['initial mutation rate'].replace('%', ''))/100
+        self.mutation_rate_factor = float(config_contents['mutation rate generation factor'].replace('%', '')) / 100
         self.crossover_rate = float(config_contents['crossover rate'].replace('%', ''))/100
         self.population_size = int(config_contents['population size'])
         self.commute_time = float(config_contents['commute time (hours)'])

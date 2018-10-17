@@ -1,5 +1,5 @@
 from tkinter import *
-from StoreSchedule import StoreSchedule
+from oldStoreSchedule import StoreSchedule
 import json
 import time
 

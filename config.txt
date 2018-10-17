@@ -1,6 +1,7 @@
-mutation rate : 2%
+initial mutation rate : 1%
+mutation rate generation factor : 99%
 crossover rate : 5%
-population size : 40
+population size : 80
 commute time (hours) : 1
 
 # Penalty applied to score every time a worker is assigned to a job they are not qualified for

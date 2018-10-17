@@ -4,7 +4,8 @@ from typing import List
 from Worker import Worker
 from Workforce import Workforce
 from Constants import Constants
-from copy import deepcopy
+from copy import deepcopy, copy
+import _pickle as cPickle
 
 
 class StoreSchedule:
@@ -54,16 +55,17 @@ class StoreSchedule:
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         repr = {day: {} for day in days}
 
+        # Using 12 min blocks for performance increase
         for assignment in self.schedule:
-            assignment_as_minutes = [int(assignment.end * 12 >= minute > assignment.start * 12) for minute in range(288)]
+            assignment_as_minutes = [int(assignment.end * 12 >= minutes > assignment.start * 12) for minutes in range(288)]
             if assignment.job in repr[assignment.day].keys():
-                repr[assignment.day][assignment.job] = [assignment_as_minutes[minute] + repr[assignment.day][assignment.job][minute] for minute in range(288)]
+                repr[assignment.day][assignment.job] = [assignment_as_minutes[minutes] + repr[assignment.day][assignment.job][minutes] for minutes in range(288)]
             else:
                 repr[assignment.day][assignment.job] = assignment_as_minutes
 
         repr_desired = {day: {'necessary': {}, 'recommended': {}} for day in days}
         for assignment in self.desired_schedule:
-            assignment_as_minutes = [int(assignment.end * 12 >= minute > assignment.start * 12) for minute in range(288)]
+            assignment_as_minutes = [int(assignment.end * 12 >= minutes > assignment.start * 12) for minutes in range(288)]
             if assignment.job in repr_desired[assignment.day][assignment.importance].keys():
                 repr_desired[assignment.day][assignment.importance][assignment.job] = [assignment_as_minutes[minute] + repr_desired[assignment.day][assignment.importance][assignment.job][minute] for minute in range(288)]
             else:
@@ -79,9 +81,42 @@ class StoreSchedule:
                 overfilled += sum([max(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(288)])
         return necessary_hours_not_filled / 12, recommended_hours_not_filled / 12, overfilled / 12
 
+    def get_job_scheduling_errors_2(self):
+        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+        repr = {day: {} for day in days}
+        out = {}
+        while len(assignments):
+            current_segment = assignments.pop(0)
+            layer = 0
+            if layer in out.keys() and len(out):
+                if out[layer][-1][1] == current_segment[0]:
+                    out[layer][-1][1] = current_segment[1]
+                else:
+                    out[layer].append(current_segment)
+            else:
+                out[layer] = [current_segment]
+
+            print(assignments)
+            for assignment in assignments:
+                if assignment[0] < current_segment[1]:
+                    layer += 1
+                    new_segment = [assignment[0], current_segment[1]]
+                    assignment[0] = current_segment[1]
+
+                    if layer in out.keys():
+                        if out[layer][-1][1] == new_segment[0]:
+                            out[layer][-1][1] = new_segment[1]
+                        else:
+                            out[layer].append(new_segment)
+                    else:
+                        out[layer] = [new_segment]
+
+        print(out)
+        return 0
+
     def mutate(self, rate=None):
         mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']
-        mutation_rate = rate/100 if rate is not None else self.constants.mutation_rate
+        mutation_rate = rate if rate is not None else self.constants.mutation_rate
 
         for assignment in self.schedule:
             if mutation_rate >= random.random():
@@ -157,8 +192,8 @@ class StoreSchedule:
         child1, child2 = StoreSchedule(self.input_data, self.visualizer_col_number), StoreSchedule(self.input_data, self.visualizer_col_number)
 
         for day in days:
-            assignments_1 = deepcopy(self.get_assignments_day(day))
-            assignments_2 = deepcopy(second_schedule.get_assignments_day(day))
+            assignments_1 = cPickle.loads(cPickle.dumps(self.get_assignments_day(day), -1))
+            assignments_2 = cPickle.loads(cPickle.dumps(second_schedule.get_assignments_day(day), -1))
 
             if days_to_swap[days.index(day)]:
                 for assignment in assignments_1:
