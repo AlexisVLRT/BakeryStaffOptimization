@@ -81,38 +81,45 @@ class StoreSchedule:
                 overfilled += sum([max(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(288)])
         return necessary_hours_not_filled / 12, recommended_hours_not_filled / 12, overfilled / 12
 
-    def get_job_scheduling_errors_2(self):
+    def generate_schedule_repr(self):
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         repr = {day: {} for day in days}
-        out = {}
+        assignments = deepcopy(self.schedule)
+        assignments = sorted(assignments, key=lambda assignment: assignment.start)
         while len(assignments):
             current_segment = assignments.pop(0)
             layer = 0
-            if layer in out.keys() and len(out):
-                if out[layer][-1][1] == current_segment[0]:
-                    out[layer][-1][1] = current_segment[1]
+            if layer in repr[current_segment.day].keys() and len(repr[current_segment.day]):
+                if repr[current_segment.day][layer][-1].end == current_segment.start:
+                    repr[current_segment.day][layer][-1].end = current_segment.end
                 else:
-                    out[layer].append(current_segment)
+                    repr[current_segment.day][layer].append(current_segment)
             else:
-                out[layer] = [current_segment]
+                repr[current_segment.day][layer] = [current_segment]
 
-            print(assignments)
             for assignment in assignments:
-                if assignment[0] < current_segment[1]:
-                    layer += 1
-                    new_segment = [assignment[0], current_segment[1]]
-                    assignment[0] = current_segment[1]
+                if assignment.job == current_segment.job:
+                    if assignment.start < current_segment.end:
+                        layer += 1
+                        new_segment = deepcopy(assignment)
+                        new_segment.end = current_segment.end
+                        assignment.start = current_segment.end
 
-                    if layer in out.keys():
-                        if out[layer][-1][1] == new_segment[0]:
-                            out[layer][-1][1] = new_segment[1]
+                        if layer in repr[current_segment.day].keys():
+                            if repr[current_segment.day][layer][-1].end == new_segment.start:
+                                repr[current_segment.day][layer][-1].end = new_segment.end
+                            else:
+                                repr[current_segment.day][layer].append(new_segment)
                         else:
-                            out[layer].append(new_segment)
-                    else:
-                        out[layer] = [new_segment]
+                            repr[current_segment.day][layer] = [new_segment]
+        out = []
+        for day in days:
+            out += list(repr[day].values())[0]
 
-        print(out)
-        return 0
+        self.schedule  = out
+
+        print(len(self.schedule), len(out))
+        return repr
 
     def mutate(self, rate=None):
         mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']

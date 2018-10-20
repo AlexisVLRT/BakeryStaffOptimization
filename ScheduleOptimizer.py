@@ -87,43 +87,49 @@ if __name__ == '__main__':
         data_in = json.load(f)
 
     scheduler = Scheduler(data_in)
-    bests, worsts, averages = [], [], []
-    best_individual = [-1000000]
-    for generation in range(1):
-        best, worst, average, pop_size = scheduler.get_population_stats()
-        current_mutation_rate = scheduler.constants.mutation_rate * scheduler.constants.mutation_rate_factor**generation
-        print('Generation {} : Best : {}, Worst : {}, Average : {}, Pop size : {}, Mutation rate : {}%'.format(generation, best[0], worst[0], average, pop_size, round(current_mutation_rate*100, 3)))
-        bests.append(best[0])
-        worsts.append(worst[0])
-        averages.append(average)
-        if best[0] >= best_individual[0]:
-            best_individual = best
-
-        if plots:
-            plt.clf()
-            plt.plot(np.array([bests, worsts, averages]).T)
-            plt.pause(0.00001)
-
-        trend_window = 25
-        if len(averages) > trend_window:
-            model = LinearRegression()
-            X = [i for i in range(trend_window)]
-            X = np.reshape(X, (len(X), 1))
-            model.fit(X, averages[-trend_window:])
-            trend = model.predict(X)
-            if trend[0] > trend[-1]:
-                print("Stopping early")
-                break
+    repr = scheduler.initial_schedule.generate_schedule_repr()
+    # [print(thing.json_repr()) for thing in repr['mon'][0]]
+    # scheduler.population[0].generate_schedule_repr()
+    visu = Visualizer(scheduler.initial_schedule.desired_schedule, scheduler.initial_schedule)
 
 
-        scheduler.mutate(rate=current_mutation_rate)
-        scheduler.selection()
-        start = time.time()
-        scheduler.mate()
-        print(time.time()-start)
-
-    best, worst, average, pop_size = scheduler.get_population_stats()
-    print(best_individual[0], worst[0], average, pop_size, best[-1])
-    with open('Results//TestJson{}.json'.format(best_individual[0]), 'w', encoding='utf8') as f:
-        json.dump(best_individual[1].json_repr(), f, ensure_ascii=False, separators=(',', ':'), indent=4)
-    visu = Visualizer(scheduler.initial_schedule.desired_schedule, best_individual[1])
+    # bests, worsts, averages = [], [], []
+    # best_individual = [-1000000]
+    # for generation in range(1):
+    #     best, worst, average, pop_size = scheduler.get_population_stats()
+    #     current_mutation_rate = scheduler.constants.mutation_rate * scheduler.constants.mutation_rate_factor**generation
+    #     print('Generation {} : Best : {}, Worst : {}, Average : {}, Pop size : {}, Mutation rate : {}%'.format(generation, best[0], worst[0], average, pop_size, round(current_mutation_rate*100, 3)))
+    #     bests.append(best[0])
+    #     worsts.append(worst[0])
+    #     averages.append(average)
+    #     if best[0] >= best_individual[0]:
+    #         best_individual = best
+    #
+    #     if plots:
+    #         plt.clf()
+    #         plt.plot(np.array([bests, worsts, averages]).T)
+    #         plt.pause(0.00001)
+    #
+    #     trend_window = 25
+    #     if len(averages) > trend_window:
+    #         model = LinearRegression()
+    #         X = [i for i in range(trend_window)]
+    #         X = np.reshape(X, (len(X), 1))
+    #         model.fit(X, averages[-trend_window:])
+    #         trend = model.predict(X)
+    #         if trend[0] > trend[-1]:
+    #             print("Stopping early")
+    #             break
+    #
+    #
+    #     scheduler.mutate(rate=current_mutation_rate)
+    #     scheduler.selection()
+    #     start = time.time()
+    #     scheduler.mate()
+    #     print(time.time()-start)
+    #
+    # best, worst, average, pop_size = scheduler.get_population_stats()
+    # print(best_individual[0], worst[0], average, pop_size, best[-1])
+    # with open('Results//TestJson{}.json'.format(best_individual[0]), 'w', encoding='utf8') as f:
+    #     json.dump(best_individual[1].json_repr(), f, ensure_ascii=False, separators=(',', ':'), indent=4)
+    # visu = Visualizer(scheduler.initial_schedule.desired_schedule, best_individual[1])
