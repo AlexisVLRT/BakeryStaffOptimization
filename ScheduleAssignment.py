@@ -1,4 +1,7 @@
 class ScheduleAssignment:
+    """
+    A task for the schedule
+    """
     def __init__(self, worker, store, job, day, start, end, visualizer_id, importance='recommended'):
         self.worker = worker
         self.store = store
@@ -20,3 +23,6 @@ class ScheduleAssignment:
             'Importance': self.importance
         }
         return assignment
+
+    def __repr__(self):
+        return '\nDay : {} | Start : {} | End : {} | Job : {}'.format(self.day, self.start, self.end, self.job)

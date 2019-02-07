@@ -1,4 +1,7 @@
 class Constants:
+    """
+    Parses the set of constants specified in the config file
+    """
     def __init__(self):
         config_contents = {}
         with open('config.txt', 'r') as f:

@@ -1,10 +1,11 @@
 from tkinter import *
-from oldStoreSchedule import StoreSchedule
-import json
-import time
+from StoreSchedule import StoreSchedule
 
 
 class Visualizer:
+    """
+    A quickly done visualizer for generated schedules
+    """
     def __init__(self, blank_schedule_data, full_schedule):
         self.blank_schedule_data = blank_schedule_data
         self.full_schedule = full_schedule
@@ -20,6 +21,10 @@ class Visualizer:
         self.tk.mainloop()
 
     def display_blank(self):
+        """
+        Displays en empty schedule
+        :return:
+        """
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         y = 0
         for i in range(5, 22):
@@ -44,6 +49,11 @@ class Visualizer:
                 self.add_task(offset, 80 // len(day_assignments), assignment.job, day, assignment.start, assignment.end, True)
 
     def display_full(self, filled_schedule: StoreSchedule):
+        """
+        Displays a schedule
+        :param filled_schedule: a StoreSchedule object
+        :return:
+        """
         for day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']:
             assignments = filled_schedule.get_assignments_day(day)
             for assignment in assignments:
@@ -51,6 +61,18 @@ class Visualizer:
                 self.add_task(offset, 7*80//filled_schedule.visualizer_col_number, assignment.job, day, assignment.start, assignment.end, name=assignment.worker.first_name)
 
     def add_task(self, offset, width, job, day, start, end, bg=False, name=None):
+        """
+        Adds individual tasks to the schedule
+        :param offset: Positional offset in pixels for the rectangle representing the task
+        :param width: width the the rectangle
+        :param job: job int
+        :param day: day int
+        :param start: hour of beginning
+        :param end: hour of end
+        :param bg: background color
+        :param name: name of the employee
+        :return:
+        """
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         jobs = ['snack', 'vente', 'drive-pizza']
         colors = ['red', 'blue', 'green', 'yellow', 'pink', 'orange']
@@ -62,11 +84,3 @@ class Visualizer:
         else:
             self.canvas.create_line(x + offset, start_px, x + offset, end_px, width=width*0.5, fill=colors[jobs.index(job)])
             self.canvas.create_text(x + offset, (start_px + end_px)/2, text=name, angle=90, fill='white')
-
-
-if __name__ == '__main__':
-    with open('testDataIn.json', 'r') as f:
-        data_in = json.load(f)['schedule']
-    schedule = StoreSchedule()
-    schedule.schedule = data_in
-    Visualizer(schedule)

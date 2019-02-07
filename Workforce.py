@@ -1,4 +1,7 @@
 class Workforce:
+    """
+    A collection of workers
+    """
     def __init__(self):
         self.workers = []
 

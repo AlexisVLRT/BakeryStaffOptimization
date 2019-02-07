@@ -9,6 +9,10 @@ import _pickle as cPickle
 
 
 class StoreSchedule:
+    """
+    A Store's schedule.
+    This is what we are trying to optimize, so a StoreSchedule instance is an individual of the population.
+    """
     def __init__(self, input_data, visualizer_col_number=None):
         self.input_data = input_data
         self.desired_schedule = []  # type: List[ScheduleAssignment]
@@ -32,6 +36,10 @@ class StoreSchedule:
         self.fitness = None
 
     def json_repr(self):
+        """
+        Generates a dict (basically a json) representation of the StoreSchedule. It contains all the assignments, the score of the schedule and all the warnings about broken rules
+        :return: dict
+        """
         score, warnings = self.get_fitness()
         schedule = {
             'Score': score,
@@ -41,16 +49,27 @@ class StoreSchedule:
         return schedule
 
     def assign(self, assignment: ScheduleAssignment):
+        """
+        Assigns a task and a worker
+        :param assignment: a ScheduleAssignment object
+        :return:
+        """
         self.schedule.append(assignment)
         assignment.worker.add_task(assignment)
 
     def get_assignments_day(self, day):
+        """
+        Returns the assignments on the schedule for the day
+        :param day: day of the week
+        :return: a list of ScheduleAssignment objects
+        """
         return [assignment for assignment in self.schedule if assignment.day == day]
 
     def get_job_scheduling_errors(self):
         """
-        works out the number of unassigned necessary hours, unassigned recommended hours, and over assigned hours for the week
-        :return:
+        Works out the number of unassigned necessary hours, unassigned recommended hours, and over assigned hours for the week
+        This is the most expensive function. Finding a way to optimize it would greatly improve performance
+        :return: necessary hours not filled, recommended hours not filled, overfilled
         """
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         repr = {day: {} for day in days}
@@ -81,47 +100,12 @@ class StoreSchedule:
                 overfilled += sum([max(0, repr[day][job_name][minute] - (repr_desired[day]['necessary'][job_name][minute] if job_name in repr_desired[day]['necessary'].keys() else 0) - (repr_desired[day]['recommended'][job_name][minute] if job_name in repr_desired[day]['recommended'].keys() else 0)) for minute in range(288)])
         return necessary_hours_not_filled / 12, recommended_hours_not_filled / 12, overfilled / 12
 
-    def generate_schedule_repr(self):
-        days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-        repr = {day: {} for day in days}
-        assignments = deepcopy(self.schedule)
-        assignments = sorted(assignments, key=lambda assignment: assignment.start)
-        while len(assignments):
-            current_segment = assignments.pop(0)
-            layer = 0
-            if layer in repr[current_segment.day].keys() and len(repr[current_segment.day]):
-                if repr[current_segment.day][layer][-1].end == current_segment.start:
-                    repr[current_segment.day][layer][-1].end = current_segment.end
-                else:
-                    repr[current_segment.day][layer].append(current_segment)
-            else:
-                repr[current_segment.day][layer] = [current_segment]
-
-            for assignment in assignments:
-                if assignment.job == current_segment.job:
-                    if assignment.start < current_segment.end:
-                        layer += 1
-                        new_segment = deepcopy(assignment)
-                        new_segment.end = current_segment.end
-                        assignment.start = current_segment.end
-
-                        if layer in repr[current_segment.day].keys():
-                            if repr[current_segment.day][layer][-1].end == new_segment.start:
-                                repr[current_segment.day][layer][-1].end = new_segment.end
-                            else:
-                                repr[current_segment.day][layer].append(new_segment)
-                        else:
-                            repr[current_segment.day][layer] = [new_segment]
-        out = []
-        for day in days:
-            out += list(repr[day].values())[0]
-
-        self.schedule  = out
-
-        print(len(self.schedule), len(out))
-        return repr
-
     def mutate(self, rate=None):
+        """
+        The mutation method. Different types of mutations are implemented
+        :param rate: probability that an assignment is mutated
+        :return:
+        """
         mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']
         mutation_rate = rate if rate is not None else self.constants.mutation_rate
 
@@ -194,6 +178,11 @@ class StoreSchedule:
                     assignment.worker.add_task(assignment)
 
     def mate(self, second_schedule: "StoreSchedule"):
+        """
+        Fuses two schedules to create two more
+        :param second_schedule: the second parent
+        :return: 2 'child' StoreSchedule objects
+        """
         days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
         days_to_swap = [random.randint(0, 1) for _ in range(7)]
         child1, child2 = StoreSchedule(self.input_data, self.visualizer_col_number), StoreSchedule(self.input_data, self.visualizer_col_number)
@@ -219,6 +208,11 @@ class StoreSchedule:
         return child1, child2
 
     def get_fitness(self):
+        """
+        Fitness function calculator. The calculation is worked out according to the client's specifications and rules
+        The weights of each rules are set in the config file
+        :return: the fitness score of the individual
+        """
         score = 0
         warnings = []
 

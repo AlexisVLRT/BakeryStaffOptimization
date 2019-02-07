@@ -3,6 +3,9 @@ from ScheduleAssignment import ScheduleAssignment
 
 
 class Worker:
+    """
+    Object defining the workers
+    """
     def __init__(self, worker_id, first_name, last_name, normal_hours=None, remaining_hours=None, jobs=None, store=None, scheduled_time_off=None):
         self.worker_id = worker_id
         self.first_name = first_name
