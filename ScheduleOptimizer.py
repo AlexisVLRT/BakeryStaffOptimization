@@ -99,21 +99,15 @@ class Scheduler:
         worst = sys.maxsize, None
         average = 0
 
+        start = time.time()
         if parallel:
             processes = cpu_count()
             pop_split = [self.population[round(i * len(self.population) / processes):round((i + 1) * len(self.population) / processes)] for i in range(0, processes)]
-            start_split = time.time()
-            with Pool(processes) as p:
-                pop_split = p.map(dill.dumps, pop_split)
-            print('Split done in ' + str(round(time.time() - start_split, 1)) + 's')
-            start = time.time()
             with Pool(processes) as p:
                 res = p.map(self.get_population_stats_batch, pop_split)
-            print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
-            print('Total : ' + str(round(time.time() - start_split, 1)) + 's')
             self.population = []
             for batch in res:
-                self.population += dill.loads(batch)
+                self.population += batch
 
             for individual in self.population:
                 fitness, warnings = individual.fitness, individual.warnings
@@ -127,15 +121,16 @@ class Scheduler:
                 best = (int(fitness), individual, warnings) if fitness > best[0] else best
                 worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
                 average += fitness / len(self.population)
-            print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
+
+        print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
 
         return best, worst, int(average), len(self.population)
 
     def get_population_stats_batch(self, batch):
-        pop_batch = dill.loads(batch)
+        pop_batch = batch
         for indiv in pop_batch:
             indiv.get_fitness()
-        return dill.dumps(pop_batch)
+        return pop_batch
 
 
 if __name__ == '__main__':
