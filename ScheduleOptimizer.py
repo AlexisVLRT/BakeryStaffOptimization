@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import json
-
+from multiprocessing import Pool, cpu_count
+import dill
 
 class Scheduler:
     """
@@ -87,23 +88,54 @@ class Scheduler:
             self.new_generation.remove(individual)
             self.new_generation.remove(mating_partner)
 
-    def get_population_stats(self):
+    def get_population_stats(self, parallel=False):
         """
-        Calulates statistics (best, worst, average, pop size) of the whole population
+        Calulates statistics (best, worst, average, pop size) of the whole population.
+        Also stores the calculated scores in the individual objects
         :return: best, worst, average, size
         """
         print('Calculating population stats...')
         best = -sys.maxsize - 1, None
         worst = sys.maxsize, None
         average = 0
-        start = time.time()
-        for individual in self.population:
-            fitness, warnings = individual.get_fitness()
-            best = (int(fitness), individual, warnings) if fitness > best[0] else best
-            worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
-            average += fitness/len(self.population)
-        print('Done in ' + str(round(time.time() - start, 1)) + 's')
+
+        if parallel:
+            processes = cpu_count()
+            pop_split = [self.population[round(i * len(self.population) / processes):round((i + 1) * len(self.population) / processes)] for i in range(0, processes)]
+            start_split = time.time()
+            with Pool(processes) as p:
+                pop_split = p.map(dill.dumps, pop_split)
+            print('Split done in ' + str(round(time.time() - start_split, 1)) + 's')
+            start = time.time()
+            with Pool(processes) as p:
+                res = p.map(self.get_population_stats_batch, pop_split)
+            print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
+            print('Total : ' + str(round(time.time() - start_split, 1)) + 's')
+            self.population = []
+            for batch in res:
+                self.population += dill.loads(batch)
+
+            for individual in self.population:
+                fitness, warnings = individual.fitness, individual.warnings
+                best = (int(fitness), individual, warnings) if fitness > best[0] else best
+                worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
+                average += fitness / len(self.population)
+        else:
+            start = time.time()
+            for individual in self.population:
+                fitness, warnings = individual.get_fitness()
+                best = (int(fitness), individual, warnings) if fitness > best[0] else best
+                worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
+                average += fitness / len(self.population)
+            print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
+
         return best, worst, int(average), len(self.population)
+
+    def get_population_stats_batch(self, batch):
+        pop_batch = dill.loads(batch)
+        for indiv in pop_batch:
+            indiv.get_fitness()
+        return dill.dumps(pop_batch)
 
 
 if __name__ == '__main__':
@@ -117,9 +149,9 @@ if __name__ == '__main__':
     bests, worsts, averages = [], [], []
     best_individual = [- sys.maxsize]
     generation = -1
-    while True:
+    while generation < 3:
         generation += 1
-        best, worst, average, pop_size = scheduler.get_population_stats()
+        best, worst, average, pop_size = scheduler.get_population_stats(parallel=True)
 
         # Logarithmic decay for the mutation rate
         current_mutation_rate = scheduler.constants.mutation_rate * scheduler.constants.mutation_rate_factor**generation
@@ -158,4 +190,4 @@ if __name__ == '__main__':
     print(best_individual[0], worst[0], average, pop_size, best[-1])
     with open('Results{}.json'.format(best_individual[0]), 'w', encoding='utf8') as f:
         json.dump(best_individual[1].json_repr(), f, ensure_ascii=False, separators=(',', ':'), indent=4)
-    visu = Visualizer(scheduler.initial_schedule.desired_schedule, best_individual[1])
+    # visu = Visualizer(scheduler.initial_schedule.desired_schedule, best_individual[1])

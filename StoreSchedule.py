@@ -34,6 +34,7 @@ class StoreSchedule:
         self.visualizer_col_number = visualizer_col_number
         self.constants = Constants()
         self.fitness = None
+        self.warnings = None
 
     def json_repr(self):
         """
@@ -322,4 +323,5 @@ class StoreSchedule:
             score -= insufficient_commute_time * self.constants.commuting
 
         self.fitness = score
+        self.warnings = warnings
         return score, warnings
