@@ -1,17 +1,17 @@
-initial mutation rate : 1%
-mutation rate generation factor : 99%
+initial mutation rate : 2%
+mutation rate generation factor : 99.8%
 crossover rate : 5%
-population size : 80
+population size : 100
 commute time (hours) : 1
 
 # Penalty applied to score every time a worker is assigned to a job they are not qualified for
 penalty unqualified : 100
 
-penalty 24h rest : 50
+penalty 24h rest : 1000
 
 penalty task overlap : 50
 
-penalty scheduled on time off : 50
+penalty scheduled on time off : 150
 
 penalty 3h gap : 50
 
