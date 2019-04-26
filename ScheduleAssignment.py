@@ -20,6 +20,7 @@ class ScheduleAssignment:
             'WeekDay': self.day,
             'StartTime': self.start,
             'EndTime': self.end,
+            'VizualizerId': self.visualizer_id,
             'Importance': self.importance
         }
         return assignment

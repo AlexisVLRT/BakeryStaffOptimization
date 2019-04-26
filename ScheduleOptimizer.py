@@ -8,11 +8,12 @@ from copy import deepcopy
 import sys
 import time
 import matplotlib.pyplot as plt
+import seaborn; seaborn.set()
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import json
 from multiprocessing import Pool, cpu_count
-import dill
+
 
 class Scheduler:
     """
@@ -101,10 +102,11 @@ class Scheduler:
 
         start = time.time()
         if parallel:
-            processes = cpu_count()
+            processes = cpu_count() - 1
             pop_split = [self.population[round(i * len(self.population) / processes):round((i + 1) * len(self.population) / processes)] for i in range(0, processes)]
             with Pool(processes) as p:
                 res = p.map(self.get_population_stats_batch, pop_split)
+
             self.population = []
             for batch in res:
                 self.population += batch
@@ -115,15 +117,13 @@ class Scheduler:
                 worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
                 average += fitness / len(self.population)
         else:
-            start = time.time()
             for individual in self.population:
                 fitness, warnings = individual.get_fitness()
                 best = (int(fitness), individual, warnings) if fitness > best[0] else best
                 worst = (int(fitness), individual, warnings) if fitness < worst[0] else worst
                 average += fitness / len(self.population)
 
-        print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
-
+        # print('Fitness calculated in ' + str(round(time.time() - start, 1)) + 's')
         return best, worst, int(average), len(self.population)
 
     def get_population_stats_batch(self, batch):
@@ -133,23 +133,42 @@ class Scheduler:
         return pop_batch
 
 
+def split_schedule(data_in):
+    """
+    Splits all the assignments in the original data into 15 minutes tasks
+
+    :param data_in: Data from the JSON input
+    :return: The data, but everything is split
+    """
+    split_schedule = {}
+    for day, day_schedule in data_in['schedule'].items():
+        split_day_schedule = []
+        for task in day_schedule:
+            split_day_schedule += [[task[0], task[1] + 0.25 * i, task[1] + 0.25 * (i + 1), task[3], task[4]] for i in
+                                   range(int((task[2] - task[1]) // 0.25))]
+        split_schedule[day] = split_day_schedule
+    data_in['schedule'] = split_schedule
+    return data_in
+
+
 if __name__ == '__main__':
     plots = True
 
     with open('testDataIn.json', 'r') as f:
-        data_in = json.load(f)
+        data_in = split_schedule(json.load(f))
 
     scheduler = Scheduler(data_in)
 
     bests, worsts, averages = [], [], []
     best_individual = [- sys.maxsize]
     generation = -1
-    while generation < 3:
+    while 1:
+        start = time.time()
         generation += 1
-        best, worst, average, pop_size = scheduler.get_population_stats(parallel=True)
+        best, worst, average, pop_size = scheduler.get_population_stats(parallel=False)
 
         # Logarithmic decay for the mutation rate
-        current_mutation_rate = scheduler.constants.mutation_rate * scheduler.constants.mutation_rate_factor**generation
+        current_mutation_rate = scheduler.constants.mutation_rate * scheduler.constants.mutation_rate_factor ** generation
 
         print('Generation {} : Best : {}, Worst : {}, Average : {}, Pop size : {}, Mutation rate : {}%'.format(generation, best[0], worst[0], average, pop_size, round(current_mutation_rate*100, 3)))
         bests.append(best[0])
@@ -164,7 +183,7 @@ if __name__ == '__main__':
             plt.pause(0.00001)
 
         # Linear regression over the n last average scores to implement early stopping
-        trend_window = 25
+        trend_window = 100
         if len(averages) > trend_window:
             model = LinearRegression()
             X = [i for i in range(trend_window)]
@@ -179,10 +198,11 @@ if __name__ == '__main__':
         scheduler.mutate(rate=current_mutation_rate)
         scheduler.selection()
         scheduler.mate()
+        print('Generation done in ' + str(round(time.time() - start, 1)) + 's')
 
     # Recap
     best, worst, average, pop_size = scheduler.get_population_stats()
-    print(best_individual[0], worst[0], average, pop_size, best[-1])
+    print(best_individual[0], worst[0], average, pop_size, best_individual[-1])
     with open('Results{}.json'.format(best_individual[0]), 'w', encoding='utf8') as f:
         json.dump(best_individual[1].json_repr(), f, ensure_ascii=False, separators=(',', ':'), indent=4)
     # visu = Visualizer(scheduler.initial_schedule.desired_schedule, best_individual[1])

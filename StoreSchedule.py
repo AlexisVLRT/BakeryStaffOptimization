@@ -105,61 +105,14 @@ class StoreSchedule:
         :param rate: probability that an assignment is mutated
         :return:
         """
-        mutations = ['extend', 'reduce', 'split', 'merge', 'swap workers', 'change worker']
+        mutations = ['swap workers', 'change worker']
         mutation_rate = rate if rate is not None else self.constants.mutation_rate
 
         for assignment in self.schedule:
             if mutation_rate >= random.random():
                 mutation = mutations[random.randint(0, len(mutations)-1)]
-                # print(mutation)
 
-                if mutation == 'extend':
-                    # an assignment starts earlier or ends later, 15 minutes.
-                    if random.randint(0, 1):
-                        assignment.end += 0.25
-                    else:
-                        assignment.start -= 0.25
-
-                elif mutation == 'reduce':
-                    # an assignment starts later or ends earlier, 15 minutes..
-                    if random.randint(0, 1):
-                        assignment.start += 0.25
-                    else:
-                        assignment.end -= 0.25
-
-                elif mutation == 'split':
-                    # an assignment is split in 2 down the middle
-                    second_half = ScheduleAssignment(
-                        assignment.worker,
-                        assignment.store,
-                        assignment.job,
-                        assignment.day,
-                        assignment.start + (assignment.end - assignment.start) / 2,
-                        assignment.end,
-                        assignment.visualizer_id
-                    )
-                    self.assign(second_half)
-                    second_half.worker.add_task(second_half)
-                    assignment.end = assignment.start + (assignment.end - assignment.start) / 2
-
-                elif mutation == 'merge':
-                    # Two assignments are merged together.
-                    # The day, job, and worker must be the sames
-                    # One has to be directly after the other
-                    # Otherwise no mutation happens
-                    for second_assignment in self.schedule:
-                        if second_assignment != assignment and second_assignment.day == assignment.day and second_assignment.worker == assignment.worker:
-                            if second_assignment.start == assignment.end:
-                                assignment.end = second_assignment.end
-                                second_assignment.worker.remove_task(second_assignment)
-                                self.schedule.remove(second_assignment)
-                            elif second_assignment.end == assignment.start:
-                                assignment.start = second_assignment.start
-                                second_assignment.worker.remove_task(second_assignment)
-                                self.schedule.remove(second_assignment)
-                            break
-
-                elif mutation == 'swap workers':
+                if mutation == 'swap workers':
                     # two assignments swap workers
                     second_assignment = self.schedule[random.randint(0, len(self.schedule)-1)]
                     if assignment != second_assignment:
@@ -236,22 +189,6 @@ class StoreSchedule:
                 warnings.append('{} {} est assigné à deux postes en même temps'.format(worker.first_name, worker.last_name))
             score -= self.constants.task_overlap * overlap_count
 
-        # A shop must at least have the minimal required personnel
-        # A shop must have the recommended personnel
-        necessary_hours_not_filled, recommended_hours_not_filled, overfilled = self.get_job_scheduling_errors()
-
-        if necessary_hours_not_filled:
-            warnings.append('{}h nécessaires non assignés'.format(necessary_hours_not_filled))
-        score -= necessary_hours_not_filled * self.constants.necessary_hours
-
-        if recommended_hours_not_filled:
-            warnings.append('{}h recommendées non assignés'.format(recommended_hours_not_filled))
-        score -= recommended_hours_not_filled * self.constants.recommended_hours
-
-        if overfilled:
-            warnings.append('{}h sur-assignés'.format(overfilled))
-        score -= overfilled * self.constants.overfilling
-
         # A worker's scheduled days off must be respected
         for worker in self.workforce.workers:
             errors = worker.get_scheduled_time_off_error_count()
@@ -312,7 +249,7 @@ class StoreSchedule:
                     warnings.append('{} {} avait {}h supplémentaires, et en effectue {}h'.format(worker.first_name, worker.last_name, round(worker.overtime_counter), round(worker.get_overtime(), 2)))
                 score += worker.get_overtime() * self.constants.overtime_dec
                 score -= (worker.get_overtime() - worker.overtime_counter) * self.constants.overtime
-                score -= max(0, worker.get_overtime() - 0.15*worker.normal_hours) * self.constants.too_much_overtime_dec
+                score -= max(0, worker.get_overtime() - 0.15 * worker.normal_hours) * self.constants.too_much_overtime_dec
 
         # No multi-site scheduling on the same day
         for worker in self.workforce.workers:
