@@ -4,8 +4,6 @@ from typing import List
 from Worker import Worker
 from Workforce import Workforce
 from Constants import Constants
-from copy import deepcopy, copy
-import _pickle as cPickle
 
 
 class StoreSchedule:
@@ -189,8 +187,10 @@ class StoreSchedule:
         child1, child2 = StoreSchedule(self.input_data, self.visualizer_col_number), StoreSchedule(self.input_data, self.visualizer_col_number)
 
         for day in days:
-            assignments_1 = cPickle.loads(cPickle.dumps(self.get_assignments_day(day), -1))
-            assignments_2 = cPickle.loads(cPickle.dumps(second_schedule.get_assignments_day(day), -1))
+            assignments_1 = [assignment.json_repr() for assignment in self.get_assignments_day(day)]
+            assignments_1 = [ScheduleAssignment(self.workforce.get_worker_by_id(assignment_json['Worker']['Id']), assignment_json['Store'], assignment_json['JobName'], assignment_json['WeekDay'], assignment_json['StartTime'], assignment_json['EndTime'], assignment_json['VizualizerId'], assignment_json['Importance']) for assignment_json in assignments_1]
+            assignments_2 = [assignment.json_repr() for assignment in second_schedule.get_assignments_day(day)]
+            assignments_2 = [ScheduleAssignment(self.workforce.get_worker_by_id(assignment_json['Worker']['Id']), assignment_json['Store'], assignment_json['JobName'], assignment_json['WeekDay'], assignment_json['StartTime'], assignment_json['EndTime'], assignment_json['VizualizerId'], assignment_json['Importance']) for assignment_json in assignments_2]
 
             if days_to_swap[days.index(day)]:
                 for assignment in assignments_1:
