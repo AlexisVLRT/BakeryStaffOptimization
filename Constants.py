@@ -11,9 +11,12 @@ class Constants:
                 config_contents[line.split(':')[0].strip()] = line.split(':')[1].strip()
 
         self.mutation_rate = float(config_contents['initial mutation rate'].replace('%', ''))/100
-        self.mutation_rate_factor = float(config_contents['mutation rate generation factor'].replace('%', '')) / 100
+        self.mutation_rate_factor = float(config_contents['mutation rate decay'].replace('%', '')) / 100
         self.crossover_rate = float(config_contents['crossover rate'].replace('%', ''))/100
+        self.selection_pressure = float(config_contents['selection pressure'].replace('%', '')) / 100
         self.population_size = int(config_contents['population size'])
+        self.population_size_decay = float(config_contents['population size decay'])
+        self.min_population_size = int(config_contents['min population size'])
         self.commute_time = float(config_contents['commute time (hours)'])
         self.unqualified = float(config_contents['penalty unqualified'])
         self.weekly_rest = float(config_contents['penalty 24h rest'])
