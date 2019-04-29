@@ -65,16 +65,20 @@ class Scheduler:
         for individual in self.population:
             individual.mutate(rate)
 
-    def selection(self):
+    def selection(self, remove_extra=0):
         """
-        Implements tournament selection to cull half the population
+        Implements tournament selection to cull a proportion the population
         :return:
         """
-        while len(self.population):
+        initial_pop_size = len(self.population)
+        while len(self.population) > initial_pop_size * (1 - self.constants.selection_pressure) // 4 * 4:
             individual, opponent = self.population[0], self.population[random.randint(1, len(self.population)-1)]
             self.new_generation.append(individual) if individual.fitness > opponent.fitness else self.new_generation.append(opponent)
             self.population.remove(individual)
             self.population.remove(opponent)
+
+        for i in range(remove_extra):
+            del self.new_generation[0]
 
     def mate(self):
         """
@@ -182,23 +186,26 @@ if __name__ == '__main__':
             plt.plot(np.array([bests, worsts, averages]).T)
             plt.pause(0.00001)
 
-        # Linear regression over the n last average scores to implement early stopping
-        trend_window = 100
-        if len(averages) > trend_window:
-            model = LinearRegression()
-            X = [i for i in range(trend_window)]
-            X = np.reshape(X, (len(X), 1))
-            model.fit(X, averages[-trend_window:])
-            trend = model.predict(X)
-            if trend[0] > trend[-1]:
-                print("Stopping early")
-                break
+        # # Linear regression over the n last average scores to implement early stopping
+        # trend_window = 100
+        # if len(averages) > trend_window:
+        #     model = LinearRegression()
+        #     X = [i for i in range(trend_window)]
+        #     X = np.reshape(X, (len(X), 1))
+        #     model.fit(X, averages[-trend_window:])
+        #     trend = model.predict(X)
+        #     if trend[0] > trend[-1]:
+        #         print("Stopping early")
+        #         break
 
         # This is where the magic (should) happens
         scheduler.mutate(rate=current_mutation_rate)
-        scheduler.selection()
+        scheduler.selection(remove_extra=2) if generation % (4/scheduler.constants.population_size_decay) == 0 and len(scheduler.population) > scheduler.constants.min_population_size else scheduler.selection()
         scheduler.mate()
         print('Generation done in ' + str(round(time.time() - start, 1)) + 's')
+
+        with open('Results-tmp.json', 'w', encoding='utf8') as f:
+            json.dump(best_individual[1].json_repr(), f, ensure_ascii=False, separators=(',', ':'), indent=4)
 
     # Recap
     best, worst, average, pop_size = scheduler.get_population_stats()
